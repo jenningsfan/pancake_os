@@ -41,8 +41,18 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let mut display = Display::new(fb);
     display.clear();
     
-    let mut tty = TTY::new(&mut display);
-    writeln!(tty, "Hello World!");
+    let tty = TTY::new(&mut display, &mut port);
+
+    if let Some(mut tty) = tty {
+        writeln!(tty, "Hello World!");
+
+        let mut i = 0;
+
+        for _ in 0..100 {
+            writeln!(tty, "{}", i);
+            i += 1;
+        }
+    }
 
     loop {}
 }
