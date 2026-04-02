@@ -5,12 +5,24 @@ use crate::psf::Psf1;
 
 pub struct Display<'a> {
     fb: Option<&'a mut FrameBuffer>,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl<'a> Display<'a> {
     pub fn new(fb: Option<&'a mut FrameBuffer>) -> Self {
+        let mut width = 0;
+        let mut height = 0;
+
+        if let Some(fb) = &fb {
+            width = fb.info().width;
+            height = fb.info().height;
+        }
+
         Self {
             fb,
+            width,
+            height,
         }
     }
 
@@ -26,6 +38,10 @@ impl<'a> Display<'a> {
 
             for r in 0..h {
                 for c in 0..w {
+                    if x + c > self.width || y + c > self.height {
+                        continue;
+                    }
+
                     let p_pos = x + c + (y + r) * width;
                     if (glyph[r] >> (w - 1 - c)) & 0x1 == 0x1 {
                         fb.buffer_mut()[p_pos * 3] = 0xFF;
@@ -67,6 +83,11 @@ impl<'a> TTY<'a> {
                 let glyph = psf.glyph(c);
                 self.display.draw_glyph(self.x * psf.width, self.y * psf.height, psf.width, psf.height, glyph);
                 self.x += 1;
+
+                if self.x >= self.display.width / psf.width {
+                    self.x = 0;
+                    self.y += 1;
+                }
             }
         }
     }
