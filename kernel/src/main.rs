@@ -3,7 +3,7 @@
 
 use bootloader_api::{BootInfo, entry_point};
 use core::fmt::Write;
-use kernel::display::Display;
+use kernel::display::{Display, TTY};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
@@ -40,6 +40,9 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let fb = boot_info.framebuffer.as_mut();
     let mut display = Display::new(fb);
     display.clear();
+    
+    let mut tty = TTY::new(&mut display);
+    writeln!(tty, "Hello World!");
 
     loop {}
 }
