@@ -1,57 +1,38 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
 
+use lazy_static::lazy_static;
+use spin::Mutex;
 use bootloader_api::{BootInfo, entry_point};
 use core::fmt::Write;
-use kernel::display::{Display, TTY};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u32)]
-pub enum QemuExitCode {
-    Success = 0x10,
-    Failed = 0x11,
-}
-
-pub fn exit_qemu(exit_code: QemuExitCode) -> ! {
-    use x86_64::instructions::{nop, port::Port};
-
-    unsafe {
-        let mut port = Port::new(0xf4);
-        port.write(exit_code as u32);
-    }
-
-    loop {
-        nop();
-    }
-}
-
-pub fn serial() -> uart_16550::SerialPort {
-    let mut port = unsafe { uart_16550::SerialPort::new(0x3F8) };
-    port.init();
-    port
-}
+use kernel::{display::{DISPLAY, Display, TTY, WRITER}, println, display};
+use kernel::SERIAL;
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
-    let mut port = serial();
-    writeln!(port, "Entered kernel with boot info: {boot_info:?}").unwrap();
+    SERIAL.lock().init();
+    writeln!(SERIAL.lock(), "Entered kernel with boot info: {boot_info:?}").unwrap();
     
-    let fb = boot_info.framebuffer.as_mut();
-    let mut display = Display::new(fb);
-    display.clear();
+    let fb: Option<&mut bootloader_api::info::FrameBuffer> = boot_info.framebuffer.as_mut();
     
-    let tty = TTY::new(&mut display, &mut port);
+    DISPLAY.call_once(|| {
+        Display::new(fb).into()
+    });
 
-    if let Some(mut tty) = tty {
-        writeln!(tty, "Hello World!");
+    display!().clear();
 
-        let mut i = 0;
+    WRITER.call_once(|| {
+        TTY::new().expect("TTY should init").into()
+    });
 
-        for _ in 0..100 {
-            writeln!(tty, "{}", i);
-            i += 1;
-        }
+    println!("Hello World!");
+
+    let mut i = 0;
+
+    for _ in 0..100 {
+        println!("{i}");
+        i += 1;
     }
 
     loop {}
@@ -61,6 +42,6 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 #[panic_handler]
 #[cfg(not(test))]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    let _ = writeln!(serial(), "PANIC: {info}");
-    exit_qemu(QemuExitCode::Failed);
+    println!("PANIC: {info}");
+    loop {}
 }

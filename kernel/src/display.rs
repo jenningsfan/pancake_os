@@ -1,8 +1,13 @@
 use core::fmt::{self, Write};
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
+use spin::{Mutex, once::Once};
 use uart_16550::SerialPort;
 use crate::psf::Psf1;
+use crate::SERIAL;
+use crate::display;
 
+pub static DISPLAY: Once<Mutex<Display>> = Once::new();
+pub static WRITER: Once<Mutex<TTY>> = Once::new();
 
 pub struct Display<'a> {
     fb: Option<&'a mut FrameBuffer>,
@@ -64,24 +69,20 @@ impl<'a> Display<'a> {
 pub struct TTY<'a> {
     x: usize,
     y: usize,
-    display: &'a mut Display<'a>,
-    serial: &'a mut uart_16550::SerialPort,
     psf1: Psf1<'a>,
 }
 
 impl<'a> TTY<'a> {
-    pub fn new(display: &'a mut Display<'a>, serial: &'a mut uart_16550::SerialPort) -> Option<Self> {
+    pub fn new() -> Option<Self> {
         Some(Self {
             x: 0,
             y: 0,
-            display,
-            serial,
             psf1: Psf1::new(crate::psf::FONT)?,
         })
     }
 
-    fn write_string(&mut self, s: &str) {
-        self.serial.write_str(s);
+    fn write_string(&mut self, s: &str) -> fmt::Result {
+        SERIAL.lock().write_str(s)?;
         
         for c in s.chars() {
             if c == '\n' {
@@ -90,21 +91,23 @@ impl<'a> TTY<'a> {
             }
             let glyph = self.psf1.glyph(c);
             
-            self.display.draw_glyph(self.x * self.psf1.width, self.y * self.psf1.height, self.psf1.width, self.psf1.height, glyph);
+            display!().draw_glyph(self.x * self.psf1.width, self.y * self.psf1.height, self.psf1.width, self.psf1.height, glyph);
             self.x += 1;
 
-            if self.x >= self.display.width / self.psf1.width {
+            if self.x >= display!().width / self.psf1.width {
                 self.scroll_line();
             }
         }
+
+        Ok(())
     }
 
     fn scroll_line(&mut self) {
         self.x = 0;
         self.y += 1;
 
-        if self.y >= self.display.height / self.psf1.height {
-            self.display.scroll_lines_up(self.psf1.height);
+        if self.y >= display!().height / self.psf1.height {
+            display!().scroll_lines_up(self.psf1.height);
             self.y -= 1;
         }
     }
@@ -112,7 +115,28 @@ impl<'a> TTY<'a> {
 
 impl<'a> fmt::Write for TTY<'a> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        self.write_string(s);
+        self.write_string(s)?;
         Ok(())
     }
+}
+
+#[macro_export]
+macro_rules! display {
+    () => (DISPLAY.get().unwrap().lock());
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::display::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    WRITER.get().unwrap().lock().write_fmt(args).unwrap();
 }
