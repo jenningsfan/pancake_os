@@ -8,8 +8,8 @@ lazy_static! {
         let mut idt = InterruptDescriptorTable::new();
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         unsafe {
-            //idt.double_fault.set_handler_addr(VirtAddr::from_ptr(double_fault_handler as *const fn(stack_frame: InterruptStackFrame, _error_code:u64)))
-            idt.double_fault.set_handler_fn(double_fault_handler)
+            idt.double_fault.set_handler_addr(VirtAddr::from_ptr(double_fault_handler as *const fn(stack_frame: InterruptStackFrame, _error_code:u64)))
+            //idt.double_fault.set_handler_fn(double_fault_handler)
                 .set_stack_index(gdt::DF_IST_INDEX);
         } // safe as stack index is valid and used only for DF
         // idt.invalid_tss.set_handler_fn(tss_invalid_handler);
@@ -26,7 +26,7 @@ extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame)
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
-extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, _error_code: u64) -> !
+extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame) -> !
 {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
