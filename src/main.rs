@@ -7,6 +7,8 @@ fn main() {
     let uefi_path = env!("UEFI_PATH");
     let bios_path = env!("BIOS_PATH");
 
+    println!("{}", bios_path);
+    
     // parse mode from CLI
     let args: Vec<String> = env::args().collect();
     let prog = &args[0];
@@ -33,6 +35,9 @@ fn main() {
     // don't display video output
     //cmd.arg("-display").arg("none");
     // enable the guest to exit qemu
+    cmd.arg("-d").arg("int");
+    cmd.arg("-D").arg("int.log");
+    //cmd.arg("-monitor").arg("stdio");
     cmd.arg("-device")
         .arg("isa-debug-exit,iobase=0xf4,iosize=0x04");
 

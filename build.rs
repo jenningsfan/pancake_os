@@ -22,4 +22,6 @@ fn main() {
     // pass the disk image paths as env variables to the
     println!("cargo:rustc-env=UEFI_PATH={}", uefi_path.display());
     println!("cargo:rustc-env=BIOS_PATH={}", bios_path.display());
+
+    println!("{}", bios_path.display());
 }
