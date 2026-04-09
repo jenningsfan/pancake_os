@@ -5,10 +5,12 @@ pub mod display;
 pub mod psf;
 pub mod interrupts;
 pub mod gdt;
+pub mod pic8259;
 
 use bootloader_api::BootInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use x86_64::instructions::port::{Port, PortWrite};
 
 lazy_static! {
     pub static ref SERIAL: Mutex<uart_16550::SerialPort> = unsafe { uart_16550::SerialPort::new(0x3F8).into() };
@@ -17,6 +19,7 @@ lazy_static! {
 pub fn init(boot_info: &'static mut BootInfo) {
     gdt::init();
     interrupts::init_idt();
+    interrupts::PIC.lock().init();
     SERIAL.lock().init();
     
     let fb: Option<&mut bootloader_api::info::FrameBuffer> = boot_info.framebuffer.as_mut();
@@ -28,4 +31,11 @@ pub fn init(boot_info: &'static mut BootInfo) {
     display::WRITER.call_once(|| {
         display::TTY::new().expect("TTY should init").into()
     });
+
+    x86_64::instructions::interrupts::enable();
+}
+
+pub unsafe fn port_write_wait<T>(port: &mut Port<T>, value: T) where T: PortWrite {
+    port.write(value);
+    Port::new(0x80).write(0x00 as u8); // wait
 }

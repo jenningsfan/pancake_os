@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use bootloader_api::{BootInfo, entry_point};
 use core::fmt::Write;
-use kernel::{display::{DISPLAY, Display, TTY, WRITER}, interrupts, println};
+use kernel::{display::{DISPLAY, Display, TTY, WRITER}, interrupts, print, println};
 use kernel::display;
 use kernel::SERIAL;
 
@@ -27,19 +27,22 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
 
     //x86_64::instructions::interrupts::int3(); // int 3
 
-    unsafe {
-        *(0xdeadbe00 as *mut u8) = 42;
-    };
+    // unsafe {
+    //     *(0xdeadbe00 as *mut u8) = 42;
+    // };
 
-    
+    println!("i'm still alive yupeee");
 
-    loop {}
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 /// This function is called on panic.
 #[panic_handler]
-#[cfg(not(test))]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     println!("PANIC: {info}");
-    loop {}
+    loop {
+        x86_64::instructions::hlt();
+    }
 }

@@ -2,6 +2,7 @@ use core::fmt::{self, Write};
 use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
 use spin::{Mutex, once::Once};
 use uart_16550::SerialPort;
+use x86_64::instructions::interrupts;
 use crate::psf::Psf1;
 use crate::SERIAL;
 use crate::display;
@@ -82,7 +83,7 @@ impl<'a> TTY<'a> {
     }
 
     fn write_string(&mut self, s: &str) -> fmt::Result {
-        SERIAL.lock().write_str(s)?;
+        interrupts::without_interrupts(|| {SERIAL.lock().write_str(s).unwrap()});
         
         for c in s.chars() {
             if c == '\n' {
@@ -138,5 +139,7 @@ macro_rules! println {
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
-    WRITER.get().unwrap().lock().write_fmt(args).unwrap();
+    interrupts::without_interrupts(|| {
+        WRITER.get().unwrap().lock().write_fmt(args).unwrap();
+    });
 }

@@ -37,7 +37,7 @@ fn main() {
     // enable the guest to exit qemu
     cmd.arg("-d").arg("int");
     cmd.arg("-D").arg("int.log");
-    //cmd.arg("-monitor").arg("stdio");
+    cmd.arg("-monitor").arg("telnet:127.0.0.1:1234,server,nowait");
     cmd.arg("-device")
         .arg("isa-debug-exit,iobase=0xf4,iosize=0x04");
 
