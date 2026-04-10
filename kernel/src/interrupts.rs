@@ -1,7 +1,7 @@
 use x86_64::{VirtAddr, structures::idt::{InterruptDescriptorTable, InterruptStackFrame}};
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::{gdt, print, println, pic8259::Pic};
+use crate::{gdt, pic8259::Pic, print, println, ps2::keyboard::KEYBOARD};
 
 pub static PIC: Mutex<Pic> = Mutex::new(Pic::new());
 
@@ -68,7 +68,7 @@ extern "x86-interrupt" fn timer_handler(_stack_frame: InterruptStackFrame) {
 }
 
 extern "x86-interrupt" fn keyboard_handler(_stack_frame: InterruptStackFrame) {
-    print!("k");
+    KEYBOARD.lock().irq_handler();
     unsafe {
         PIC.lock().eoi(InterruptIndex::Keyboard.as_u8());
     }
