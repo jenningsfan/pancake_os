@@ -46,13 +46,8 @@ enum Command {
     TestPort2 = 0xA9,
     TestController = 0xAA,
     TestPort1 = 0xAB,
-    DiagnosticDump = 0xAC,
     DisablePort1 = 0xAD,
     EnablePort1 = 0xAE,
-}
-
-trait PS2Device {
-
 }
 
 pub struct PS2Controller {
@@ -140,31 +135,41 @@ impl PS2Controller {
     }
 
     unsafe fn wait_for_input_buffer_write(&mut self) {
-        while StatusReg::from_bits_truncate(self.status_reg.read())
+        unsafe {
+            while StatusReg::from_bits_truncate(self.status_reg.read())
             .contains(StatusReg::InBufStatus) { }
+        }
     }
 
     unsafe fn wait_for_input_buffer_read(&mut self) {
-        while !StatusReg::from_bits_truncate(self.status_reg.read())
-            .contains(StatusReg::OutBufStatus) { }
+        unsafe {
+            while !StatusReg::from_bits_truncate(self.status_reg.read())
+                .contains(StatusReg::OutBufStatus) { }
+        }
     }
 
     unsafe fn read_and_wait(&mut self) -> u8 {
-        self.wait_for_input_buffer_read();
-        self.data_port.read()
+        unsafe {
+            self.wait_for_input_buffer_read();
+            self.data_port.read()
+        }
     }
 
     unsafe fn write_command(&mut self, command: u8) {
         // poll until input buffer is clear
-        self.wait_for_input_buffer_write();
-        self.command_reg.write(command);
+        unsafe {
+            self.wait_for_input_buffer_write();
+            self.command_reg.write(command);
+        }
     }
 
     unsafe fn write_command_val(&mut self, command: u8, value: u8) {
-        self.wait_for_input_buffer_write();
-        self.command_reg.write(command);
-
-        self.wait_for_input_buffer_write();
-        self.data_port.write(value);
+        unsafe {
+            self.wait_for_input_buffer_write();
+            self.command_reg.write(command);
+    
+            self.wait_for_input_buffer_write();
+            self.data_port.write(value);
+        }
     }
 }

@@ -24,9 +24,7 @@ impl Pic {
         }
     }
 
-    pub fn init(&mut self) {
-        let mut wait_port: Port<u8> = Port::new(0x80);
-        
+    pub fn init(&mut self) {        
         unsafe {
             port_write_wait(&mut self.master_command, INIT);
             port_write_wait(&mut self.slave_command, INIT);
@@ -47,9 +45,11 @@ impl Pic {
 
     /// Unsafe as if wrong IRQ EOI'd then bad things happen
     pub unsafe fn eoi(&mut self, irq: u8) {
-        if irq >= 8 {
-            self.slave_command.write(EOI);
+        unsafe {
+            if irq >= 8 {
+                self.slave_command.write(EOI);
+            }
+            self.master_command.write(EOI);
         }
-        self.master_command.write(EOI);
     }
 }

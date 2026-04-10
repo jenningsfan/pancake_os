@@ -15,7 +15,7 @@ bitflags! {
 
 pub struct Psf1<'a> {
     magic: [u8; 2],
-    mode: Psf1Mode,
+    _mode: Psf1Mode,
     pub width: usize,
     pub height: usize,
     glyphs: &'a[u8],
@@ -25,7 +25,7 @@ impl<'a> Psf1<'a> {
     pub fn new(font: &'a[u8]) -> Option<Self> {
         let psf1 = Self {
             magic: [font[0], font[1]],
-            mode: Psf1Mode::from_bits(font[2])?,
+            _mode: Psf1Mode::from_bits(font[2])?,
             width: 8,
             height: font[3] as usize,
             glyphs: &font[4..],

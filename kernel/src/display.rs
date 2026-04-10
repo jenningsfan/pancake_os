@@ -1,7 +1,6 @@
 use core::fmt::{self, Write};
-use bootloader_api::info::{FrameBuffer, FrameBufferInfo};
+use bootloader_api::info::FrameBuffer;
 use spin::{Mutex, once::Once};
-use uart_16550::SerialPort;
 use x86_64::instructions::interrupts;
 use crate::psf::Psf1;
 use crate::SERIAL;

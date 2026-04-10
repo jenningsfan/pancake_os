@@ -1,13 +1,8 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
 
-use lazy_static::lazy_static;
-use spin::Mutex;
 use bootloader_api::{BootInfo, entry_point};
-use core::fmt::Write;
-use kernel::{display::{DISPLAY, Display, TTY, WRITER}, interrupts, print, println};
-use kernel::display;
-use kernel::SERIAL;
+use kernel::println;
 
 entry_point!(kernel_main);
 

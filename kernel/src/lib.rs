@@ -43,6 +43,8 @@ pub fn init(boot_info: &'static mut BootInfo) {
 }
 
 pub unsafe fn port_write_wait<T>(port: &mut Port<T>, value: T) where T: PortWrite {
-    port.write(value);
-    Port::new(0x80).write(0x00 as u8); // wait
+    unsafe {
+        Port::new(0x80).write(0x00 as u8); // wait
+        port.write(value);
+    }
 }
