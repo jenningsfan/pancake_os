@@ -6,11 +6,14 @@ pub mod psf;
 pub mod interrupts;
 pub mod gdt;
 pub mod pic8259;
+pub mod ps2;
 
 use bootloader_api::BootInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use x86_64::instructions::port::{Port, PortWrite};
+
+use crate::ps2::PS2;
 
 lazy_static! {
     pub static ref SERIAL: Mutex<uart_16550::SerialPort> = unsafe { uart_16550::SerialPort::new(0x3F8).into() };
@@ -31,6 +34,10 @@ pub fn init(boot_info: &'static mut BootInfo) {
     display::WRITER.call_once(|| {
         display::TTY::new().expect("TTY should init").into()
     });
+
+    display::DISPLAY.get().unwrap().lock().clear();
+
+    PS2.lock().init();
 
     x86_64::instructions::interrupts::enable();
 }

@@ -9,6 +9,7 @@ pub static PIC: Mutex<Pic> = Mutex::new(Pic::new());
 #[repr(u8)]
 pub enum InterruptIndex {
     Timer = 0x20,
+    Keyboard
 }
 
 impl InterruptIndex {
@@ -34,6 +35,7 @@ lazy_static! {
         } // safe as stack index is valid and used only for DF
 
         idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_handler);
+        idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_handler);
         
         idt
     };
@@ -59,9 +61,16 @@ extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame)
 }
 
 extern "x86-interrupt" fn timer_handler(_stack_frame: InterruptStackFrame) {
-    print!(".");
+    //print!(".");
     unsafe {
         PIC.lock().eoi(InterruptIndex::Timer.as_u8());
+    }
+}
+
+extern "x86-interrupt" fn keyboard_handler(_stack_frame: InterruptStackFrame) {
+    print!("k");
+    unsafe {
+        PIC.lock().eoi(InterruptIndex::Keyboard.as_u8());
     }
 }
 

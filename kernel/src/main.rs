@@ -14,7 +14,6 @@ entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {    
     kernel::init(boot_info.into());
     //writeln!(SERIAL.lock(), "Entered kernel with boot info: {boot_info:?}").unwrap();
-    display!().clear();
 
     println!("Hello World!");
 
