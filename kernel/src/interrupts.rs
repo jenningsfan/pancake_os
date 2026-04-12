@@ -1,4 +1,4 @@
-use x86_64::{VirtAddr, structures::idt::{InterruptDescriptorTable, InterruptStackFrame}};
+use x86_64::{VirtAddr, registers::control::Cr2, structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode}};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use crate::{gdt, pic8259::Pic, print, println, ps2::keyboard::KEYBOARD};
@@ -58,6 +58,10 @@ extern "x86-interrupt" fn gpf_handler(stack_frame: InterruptStackFrame) -> !
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame) -> !
 {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+}
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame: InterruptStackFrame, error_code: PageFaultErrorCode) {
+    panic!("EXCEPTION: PAGE FAULT\nAccessed address: {:?}\nError code: {:?}\nStack frame:\n{:#?}", Cr2::read(), error_code, stack_frame);
 }
 
 extern "x86-interrupt" fn timer_handler(_stack_frame: InterruptStackFrame) {
