@@ -4,7 +4,7 @@ use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 use bitflags::bitflags;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::println;
+use crate::{interrupts::{self, PIC}, println};
 
 lazy_static!{
     pub static ref PS2_CONTROLLER: Mutex<PS2Controller> = Mutex::new(PS2Controller::new());
@@ -144,6 +144,7 @@ impl PS2Controller {
                 let mut controller_config = ControllerConfig::from_bits_truncate(self.read_and_wait());
                 controller_config = controller_config.union(ControllerConfig::Port1IRQ);
                 self.write_command_val(Command::WriteControllerConfig as u8, controller_config.bits());
+                PIC.lock().unmask_irq(1); // todo: hard coding
             }
         }
     }
@@ -159,6 +160,12 @@ impl PS2Controller {
         unsafe {
             while !StatusReg::from_bits_truncate(self.status_reg.read())
                 .contains(StatusReg::OutBufStatus) { }
+        }
+    }
+
+    pub unsafe fn read_no_wait(&mut self) -> u8 {
+        unsafe {
+            self.data_port.read()
         }
     }
 

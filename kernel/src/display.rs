@@ -41,14 +41,16 @@ impl<'a> Display<'a> {
     pub fn draw_glyph(&mut self, x: usize, y: usize, w: usize, h: usize, glyph: &[u8]) {
         if let Some(fb) = &mut self.fb {
             let width = fb.info().width;
+            let stride = fb.info().stride;
+            let bpp = fb.info().bytes_per_pixel as usize;
 
             for r in 0..h {
                 for c in 0..w {
-                    let p_pos = x + c + (y + r) * width;
+                    let p_pos = x + c + (y + r) * stride;
                     if (glyph[r] >> (w - 1 - c)) & 0x1 == 0x1 {
-                        fb.buffer_mut()[p_pos * 3] = 0xFF;
-                        fb.buffer_mut()[p_pos * 3 + 1] = 0xFF;
-                        fb.buffer_mut()[p_pos * 3 + 2] = 0xFF;
+                        for i in 0..bpp {
+                            fb.buffer_mut()[p_pos * bpp + i] = 0xFF;
+                        }
                     }
                 }
             }
@@ -57,7 +59,8 @@ impl<'a> Display<'a> {
 
     pub fn scroll_lines_up(&mut self, num_lines: usize) {
         if let Some(fb) = &mut self.fb {
-            let src = num_lines * self.width * 3;
+            let info = fb.info();
+            let src = num_lines * info.stride * info.bytes_per_pixel;
             let buf = fb.buffer_mut();
             let bottom = buf.len() - src - 1;
             buf.copy_within(src.., 0);

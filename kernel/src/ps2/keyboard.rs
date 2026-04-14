@@ -43,7 +43,7 @@ impl PS2Keyboard {
 
     pub fn irq_handler(&mut self) {
         unsafe {
-            let key = PS2_CONTROLLER.lock().read_and_wait();
+            let key = PS2_CONTROLLER.lock().read_no_wait();
             
             if key == 0xF0 {
                 self.state = State::Break;

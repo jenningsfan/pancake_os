@@ -30,16 +30,19 @@ pub fn init(boot_info: &'static mut BootInfo) {
     display::DISPLAY.call_once(|| {
         display::Display::new(fb).into()
     });
-
+    
     display::WRITER.call_once(|| {
         display::TTY::new().expect("TTY should init").into()
     });
-
+    
     display::DISPLAY.get().unwrap().lock().clear();
-
+    
+    unsafe {
+        interrupts::PIC.lock().unmask_irq(0); // unmask timer
+    }
     PS2_CONTROLLER.lock().init();
     KEYBOARD.lock().init();
-
+    
     x86_64::instructions::interrupts::enable();
 }
 

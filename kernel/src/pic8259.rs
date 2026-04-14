@@ -1,6 +1,6 @@
 use x86_64::instructions::port::Port;
 
-use crate::port_write_wait;
+use crate::{port_write_wait, println};
 
 const INIT: u8 = 0x11;
 const CASCADE: u8 = 0x02;
@@ -38,8 +38,36 @@ impl Pic {
             port_write_wait(&mut self.master_data, MODE_8086);
             port_write_wait(&mut self.slave_data, MODE_8086);
 
-            port_write_wait(&mut self.master_data, 0);
-            port_write_wait(&mut self.slave_data, 0);
+            port_write_wait(&mut self.master_data, 0xFF);
+            port_write_wait(&mut self.slave_data, 0xFF);
+        }
+    }
+
+    pub unsafe fn mask_irq(&mut self, irq: u8) {
+        unsafe {
+            if irq < 8 {
+                let mask = self.master_data.read();
+                self.master_data.write(mask | (1 << irq));
+            }
+            else {
+                let irq = irq - 8;
+                let mask = self.slave_data.read();
+                self.slave_data.write(mask | (1 << irq));
+            }
+        }
+    }
+
+    pub unsafe fn unmask_irq(&mut self, irq: u8) {
+        unsafe {
+            if irq < 8 {
+                let mask = self.master_data.read();
+                self.master_data.write(mask & !(1 << irq));
+            }
+            else {
+                let irq = irq - 8;
+                let mask = self.slave_data.read();
+                self.slave_data.write(mask & !(1 << irq));
+            }
         }
     }
 

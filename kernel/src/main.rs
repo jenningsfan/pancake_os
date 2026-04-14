@@ -6,27 +6,27 @@ use kernel::println;
 
 entry_point!(kernel_main);
 
+const BUILD_TIME: &str = env!("BUILD_TIME");
+
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {    
     kernel::init(boot_info.into());
     //writeln!(SERIAL.lock(), "Entered kernel with boot info: {boot_info:?}").unwrap();
-
-    println!("Hello World!");
-
+    
+    println!("Welcome to PancakeOS.\nBuild time: {}", BUILD_TIME);
+    
     // let mut i = 0;
-
+    
     // for _ in 0..100 {
     //     println!("{i}");
     //     i += 1;
     // }
-
+    
     //x86_64::instructions::interrupts::int3(); // int 3
-
+    
     // unsafe {
     //     *(0xdeadbe00 as *mut u8) = 42;
     // };
-
-    println!("i'm still alive yupeee");
-
+    
     loop {
         x86_64::instructions::hlt();
     }

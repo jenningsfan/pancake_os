@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use chrono::{Datelike, Timelike};
 
 fn main() {
     // set by cargo, build scripts should use this directory for output files
@@ -23,5 +24,20 @@ fn main() {
     println!("cargo:rustc-env=UEFI_PATH={}", uefi_path.display());
     println!("cargo:rustc-env=BIOS_PATH={}", bios_path.display());
 
+    // build date/time
+    let now = chrono::Utc::now();
+    let formatted = format!(
+        "{:02}/{:02}/{:04} {:02}:{:02}:{:02}",
+        now.day(),
+        now.month(),
+        now.year(),
+        now.hour(),
+        now.minute(),
+        now.second()
+    );
+
+    println!("cargo:rustc-env=BUILD_TIME={}", formatted);
+
     println!("{}", bios_path.display());
+    //panic!("{}", kernel.display());
 }
