@@ -56,6 +56,7 @@ lazy_static! {
         // IRQs
         idt[InterruptIndex::Timer.as_u8()].set_handler_fn(timer_handler);
         idt[InterruptIndex::Keyboard.as_u8()].set_handler_fn(keyboard_handler);
+        idt[0x27].set_handler_fn(irq7);
 
         idt
     };
@@ -187,10 +188,8 @@ extern "x86-interrupt" fn alignment_check_handler(
 //
 
 extern "x86-interrupt" fn timer_handler(_sf: InterruptStackFrame) {
-        without_interrupts(|| {
-    print!(".");
+    //print!(".");
     unsafe { PIC.lock().eoi(InterruptIndex::Timer.as_u8()); }
-        });
 }
 
 extern "x86-interrupt" fn keyboard_handler(_sf: InterruptStackFrame) {
@@ -199,3 +198,5 @@ extern "x86-interrupt" fn keyboard_handler(_sf: InterruptStackFrame) {
         unsafe { PIC.lock().eoi(InterruptIndex::Keyboard.as_u8()); }
     });
 }
+
+extern "x86-interrupt" fn irq7(_sf: InterruptStackFrame) {} // currently nothing is attached to IRQ 7 so it must be spurious so no EOI is needed

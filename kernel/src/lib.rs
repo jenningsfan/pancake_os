@@ -7,24 +7,29 @@ pub mod interrupts;
 pub mod gdt;
 pub mod pic8259;
 pub mod ps2;
+pub mod memory;
 
 use bootloader_api::BootInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use x86_64::instructions::port::{Port, PortWrite};
+use x86_64::VirtAddr;
 
+use crate::memory::MMapFrameAllocator;
 use crate::ps2::{controller::PS2_CONTROLLER, keyboard::KEYBOARD};
 
 lazy_static! {
     pub static ref SERIAL: Mutex<uart_16550::SerialPort> = unsafe { uart_16550::SerialPort::new(0x3F8).into() };
 }
 
-pub fn init(boot_info: &'static mut BootInfo) {
+pub fn init(boot_info: &'static mut BootInfo) -> MMapFrameAllocator {
     gdt::init();
     interrupts::init_idt();
     interrupts::PIC.lock().init();
     SERIAL.lock().init();
-    
+
+    let mut frame_allocator = unsafe {memory::MMapFrameAllocator::init(&boot_info.memory_regions)};
+
     let fb: Option<&mut bootloader_api::info::FrameBuffer> = boot_info.framebuffer.as_mut();
     
     display::DISPLAY.call_once(|| {
@@ -44,6 +49,8 @@ pub fn init(boot_info: &'static mut BootInfo) {
     KEYBOARD.lock().init();
     
     x86_64::instructions::interrupts::enable();
+
+    frame_allocator
 }
 
 pub unsafe fn port_write_wait<T>(port: &mut Port<T>, value: T) where T: PortWrite {

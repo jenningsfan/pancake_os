@@ -1,32 +1,46 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
 
-use bootloader_api::{BootInfo, entry_point};
-use kernel::println;
+use bootloader_api::{BootInfo, BootloaderConfig, config::{Mapping}, entry_point};
+use kernel::{memory::{self}, println};
+use x86_64::{VirtAddr, structures::paging::{Page, PageTable, Translate}};
 
-entry_point!(kernel_main);
+const BOOTLOADER_CONFIG: BootloaderConfig = {
+    let mut config = BootloaderConfig::new_default();
+    config.mappings.physical_memory = Some(Mapping::Dynamic);
+    config
+};
+
+entry_point!(kernel_main, config = &BOOTLOADER_CONFIG);
 
 const BUILD_TIME: &str = env!("BUILD_TIME");
 
+fn recurse_print(table: &PageTable, level: u8, phys_offsest: u64) {
+    for (i, entry) in table.iter().enumerate() {
+        if !entry.is_unused() {
+            println!("L{level} Entry {i}: {entry:?}");
+    
+            if level != 1 {
+    
+                let phys = entry.frame().unwrap().start_address();
+                let virt = phys.as_u64() + phys_offsest;
+                let ptr = VirtAddr::new(virt).as_mut_ptr();
+                let lower: &PageTable = unsafe { &*ptr };
+                recurse_print(lower, level - 1, phys_offsest);
+            }
+        }
+    }
+}
+
 fn kernel_main(boot_info: &'static mut BootInfo) -> ! {    
-    kernel::init(boot_info.into());
+    let phys_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());    
+    let fb_addr = VirtAddr::from_ptr(boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr());
+    
+    let mut frame_allocator = kernel::init(boot_info.into());
     //writeln!(SERIAL.lock(), "Entered kernel with boot info: {boot_info:?}").unwrap();
     
     println!("Welcome to PancakeOS.\nBuild time: {}", BUILD_TIME);
-    
-    // let mut i = 0;
-    
-    // for _ in 0..100 {
-    //     println!("{i}");
-    //     i += 1;
-    // }
-    
-    //x86_64::instructions::interrupts::int3(); // int 3
-    
-    // unsafe {
-    //     *(0xdeadbe00 as *mut u8) = 42;
-    // };
-    
+
     loop {
         x86_64::instructions::hlt();
     }
