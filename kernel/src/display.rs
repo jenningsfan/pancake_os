@@ -40,7 +40,6 @@ impl<'a> Display<'a> {
 
     pub fn draw_glyph(&mut self, x: usize, y: usize, w: usize, h: usize, glyph: &[u8]) {
         if let Some(fb) = &mut self.fb {
-            let width = fb.info().width;
             let stride = fb.info().stride;
             let bpp = fb.info().bytes_per_pixel as usize;
 

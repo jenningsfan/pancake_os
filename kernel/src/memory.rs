@@ -1,6 +1,6 @@
-use bootloader_api::info::{MemoryRegion, MemoryRegionKind, MemoryRegions};
+use bootloader_api::info::{MemoryRegionKind, MemoryRegions};
 use x86_64::{
-    PhysAddr, VirtAddr, addr, structures::paging::{FrameAllocator, Mapper, OffsetPageTable, Page, PageTable, PhysFrame, Size4KiB}
+    PhysAddr, VirtAddr, structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB}
 };
 
 pub struct MMapFrameAllocator<> {

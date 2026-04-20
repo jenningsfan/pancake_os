@@ -1,11 +1,9 @@
-use core::panic;
 
-use bitflags::bitflags;
 use lazy_static::lazy_static;
 use super::controller::PS2_CONTROLLER;
 use super::keymap::PS2_SET2_KEYMAP_UK;
 use spin::Mutex;
-use crate::{print, println};
+use crate::print;
 
 lazy_static! {
     pub static ref KEYBOARD: Mutex<PS2Keyboard> = Mutex::new(PS2Keyboard::new());

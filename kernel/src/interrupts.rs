@@ -1,11 +1,11 @@
 use x86_64::{
-    instructions::interrupts::without_interrupts, registers::{control::Cr2, segmentation::{self, CS, DS, ES, FS, GS, SS, Segment}}, structures::idt::{
+    instructions::interrupts::without_interrupts, registers::control::Cr2, structures::idt::{
         InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode,
     },
 };
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::{gdt, pic8259::Pic, print, println, ps2::keyboard::KEYBOARD};
+use crate::{gdt, pic8259::Pic, println, ps2::keyboard::KEYBOARD};
 
 pub static PIC: Mutex<Pic> = Mutex::new(Pic::new());
 

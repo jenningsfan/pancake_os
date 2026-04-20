@@ -13,7 +13,6 @@ use bootloader_api::BootInfo;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use x86_64::instructions::port::{Port, PortWrite};
-use x86_64::VirtAddr;
 
 use crate::memory::MMapFrameAllocator;
 use crate::ps2::{controller::PS2_CONTROLLER, keyboard::KEYBOARD};
@@ -28,7 +27,7 @@ pub fn init(boot_info: &'static mut BootInfo) -> MMapFrameAllocator {
     interrupts::PIC.lock().init();
     SERIAL.lock().init();
 
-    let mut frame_allocator = unsafe {memory::MMapFrameAllocator::init(&boot_info.memory_regions)};
+    let frame_allocator = unsafe {memory::MMapFrameAllocator::init(&boot_info.memory_regions)};
 
     let fb: Option<&mut bootloader_api::info::FrameBuffer> = boot_info.framebuffer.as_mut();
     

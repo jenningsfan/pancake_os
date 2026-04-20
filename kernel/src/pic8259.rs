@@ -1,6 +1,6 @@
 use x86_64::instructions::port::Port;
 
-use crate::{port_write_wait, println};
+use crate::port_write_wait;
 
 const INIT: u8 = 0x11;
 const CASCADE: u8 = 0x02;

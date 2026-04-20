@@ -4,7 +4,7 @@ use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
 use bitflags::bitflags;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::{interrupts::{self, PIC}, println};
+use crate::{interrupts::PIC, println};
 
 lazy_static!{
     pub static ref PS2_CONTROLLER: Mutex<PS2Controller> = Mutex::new(PS2Controller::new());
