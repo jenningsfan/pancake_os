@@ -1,9 +1,12 @@
 #![no_std] // don't link the Rust standard library
 #![no_main] // disable all Rust-level entry points
 
+extern crate alloc;
+
 use bootloader_api::{BootInfo, BootloaderConfig, config::{Mapping}, entry_point};
 use kernel::{memory::{self}, println};
 use x86_64::{VirtAddr, structures::paging::{Page, PageTable, Translate}};
+use alloc::{vec, boxed::Box};
 
 const BOOTLOADER_CONFIG: BootloaderConfig = {
     let mut config = BootloaderConfig::new_default();
@@ -36,13 +39,27 @@ fn kernel_main(boot_info: &'static mut BootInfo) -> ! {
     let phys_offset = VirtAddr::new(boot_info.physical_memory_offset.into_option().unwrap());    
     let fb_addr = VirtAddr::from_ptr(boot_info.framebuffer.as_ref().unwrap().buffer().as_ptr());
     
-    let mut frame_allocator = kernel::init(boot_info.into());
+    kernel::init(boot_info.into());
     //writeln!(SERIAL.lock(), "Entered kernel with boot info: {boot_info:?}").unwrap();
     
     println!("Welcome to PancakeOS.\nBuild time: {}", BUILD_TIME);
+    
+    //let x = Box::new(42);
+
+    
+    let mut v = vec![0xDEADBEEF; 768];
+    
+    let mut i: u64 = 0;
+    println!("no crashing");
 
     loop {
         x86_64::instructions::hlt();
+        for _ in 0..128 {
+            v.push(i);
+        }
+        println!("v len: {}", v.len());
+        println!("v addr: {:0X}", v.as_ptr().addr());
+        i = i.wrapping_add(1);
     }
 }
 
